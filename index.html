@@ -1,0 +1,151 @@
+﻿<!DOCTYPE html>
+<html>
+    <head>
+        <title>wavesurfer.js</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <style>
+            body {
+                font-size: 20px;
+                font-family: Georgia, serif;
+            }
+            .boton {
+                height:  100 px;
+                width: 100px;
+                border: #003300;
+                border-style: solid;
+                color: #003300;
+                border-width: thick;
+                background-color: #ffff66;
+                font-size: 50px;
+                font-weight: bolder;
+                font-family: Georgia, serif;
+                padding: 20px;
+            }
+
+            #cuadroMarcadores {
+                font-size: 20px;
+                font-family: Georgia, serif;
+                padding: 15px;
+                border: #000000;
+                border-style: solid;
+                border-width: thick;
+            }
+        </style>
+        <script src="jquery-1.8.3.min.js"></script>
+        <script src="src/wavesurfer.js"></script>
+        <script src="src/webaudio.js"></script>
+        <script src="src/drawer.js"></script>
+        <script src="marcador.js" charset="UTF-8"></script>
+        <script>
+            $(document).ready(function() {
+                wavesurfer = Object.create(WaveSurfer);
+                marcadores = Object.create(GestorMarcadores);
+                wavesurfer.init({
+                    canvas: document.querySelector('#wave'),
+                    waveColor: 'violet',
+                    progressColor: 'purple',
+                    cursorColor: 'navy'
+                });
+
+                wavesurfer.load('media/chris_brown.mp3');
+                wavesurfer.bindDragNDrop();
+                
+                $(document).keydown(function(e){
+                    if ($(e.target).is('input')) {
+                        return;   
+                    }
+                    else if (e.keyCode == 32) {
+                        wavesurfer.playPause();
+                    }
+                    else if(e.keyCode == 77) {
+                        dispatchAgregarMarcador();
+                    }
+                    else if(e.keyCode == 88) {
+                        dispatchEliminarUltimo();
+                    }
+                });
+                
+                $("#btnPlayPause").click(function() {
+                    wavesurfer.playPause();
+                });
+                $("#btnMarcador").click(function() {
+                    dispatchAgregarMarcador();
+                });
+                $("#btnEliminar").click(function() {
+                    dispatchEliminarUltimo();
+                });
+                $("#btnEnviarMarcadores").click(function() {
+                    $.ajax({ url: 'agregaMarcador.php',
+                        data: { 
+                            marcadores: JSON.stringify(GestorMarcadores.marcadores) 
+                        },
+                        dataType: 'json',
+                        type: 'post',
+                        success: function(output) {
+                            alert("Respuesta del servidor: "+ output.exito);
+                        }
+                    });
+                });
+                
+                function dispatchAgregarMarcador() {
+                    GestorMarcadores.agregar(wavesurfer.backend.getCurrentTime(), wavesurfer.backend.getPlayedPercents());
+                    var ultimoMarcador = GestorMarcadores.ultimo();
+                    var tiempoMarcador = ultimoMarcador.tiempo;
+                    var idMarcador = ultimoMarcador.id;
+                    $("#cuadroMarcadores").append('<div id="'+idMarcador+'">Tiempo: '+tiempoMarcador+'&nbsp;&nbsp;<input>&nbsp;&nbsp;<button class="borrar">Borrar</button>&nbsp;<button class="guardar">Guardar descripción</button>&nbsp;&nbsp;<button class="irMarcador">Ir al marcador</button></div>');
+                    $("#"+idMarcador+" input").unbind("keypress");
+                    $(".borrar").click(function() {
+                        dispatchEliminar($(this).parent().get(0).id);
+                    });
+                    $(".irMarcador").click(function() {
+                        dispatchIrMarcador($(this).parent().get(0).id);
+                    });
+                    $(".guardar").click(function() {
+                        dispatchGuardarDescripcion($(this).parent().get(0).id);
+                    });
+                }
+                
+                function dispatchEliminarUltimo() {
+                    GestorMarcadores.eliminarUltimo();
+                    $("#cuadroMarcadores div:last-child").remove();
+                }
+                
+                function dispatchEliminar(idMarcador) {
+                    GestorMarcadores.eliminar(idMarcador);
+                    $("#"+idMarcador).remove();
+                }
+                
+                function dispatchIrMarcador(idMarcador) {
+                    var marcador = GestorMarcadores.buscar(idMarcador);
+                    wavesurfer.playAt(marcador.porcentaje);
+                }
+                
+                function dispatchGuardarDescripcion(idMarcador) {
+                    var descripcion = $("#"+idMarcador+" input").val(); // Busca en DOM con el id
+                    GestorMarcadores.guardarDescripcion(idMarcador, descripcion);
+                }
+                
+            });
+        </script>
+    </head>
+    <body>
+        <span>Para cargar un archivo, con drag and drop</span><br>
+        <span>Para Play/Pause con SPACE o el botón</span><br>
+        <span>Para agregar un marcador con M o el botón</span><br>
+        <span>Para eliminar el último marcador con X o el botón</span><br>
+        <div class="timeline">
+            <div class="cursor" id="wave-cursor"></div>
+            <canvas id="wave" width="1024" height="128"></canvas>
+        </div>
+        <button id="btnPlayPause" class="boton" title="Play/Pause (SPACE)">||></button>
+        <button id="btnMarcador" class="boton" title="Agregar marcador (M)">M</button>
+        <button id="btnEliminar" class="boton" title="Eliminar el último marcador (X)">X</button>
+        <h1>Marcadores:</h1>
+        <div id="cuadroMarcadores">
+        </div>
+        <p>
+            <button id="btnEnviarMarcadores" title="Enviar marcadores">Enviar marcadores</button>
+        </p>
+        <span>Funciona con Google Chrome :-)</span><br>
+    </body>
+</html>
