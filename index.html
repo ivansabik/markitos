@@ -22,13 +22,16 @@
                 padding: 20px;
             }
 
-            #cuadroMarcadores {
+            .contenedorMarcadores {
                 font-size: 20px;
                 font-family: Georgia, serif;
                 padding: 15px;
                 border: #000000;
                 border-style: solid;
                 border-width: thick;
+            }
+            .footer {
+                font-size: 14px;
             }
         </style>
         <script src="jquery-1.8.3.min.js"></script>
@@ -39,7 +42,8 @@
         <script>
             $(document).ready(function() {
                 wavesurfer = Object.create(WaveSurfer);
-                marcadores = Object.create(GestorMarcadores);
+                marcadores = Object.create(MarkerMgr);
+                $("#nombreMarcadores").val(marcadores.marcadores.id);
                 wavesurfer.init({
                     canvas: document.querySelector('#wave'),
                     waveColor: 'violet',
@@ -57,10 +61,10 @@
                     else if (e.keyCode == 32) {
                         wavesurfer.playPause();
                     }
-                    else if(e.keyCode == 77) {
+                    else if(e.keyCode == 107 || e.keyCode == 187) {
                         dispatchAgregarMarcador();
                     }
-                    else if(e.keyCode == 88) {
+                    else if(e.keyCode == 109 || e.keyCode == 189) {
                         dispatchEliminarUltimo();
                     }
                 });
@@ -75,24 +79,34 @@
                     dispatchEliminarUltimo();
                 });
                 $("#btnEnviarMarcadores").click(function() {
-                    $.ajax({ url: 'agregaMarcador.php',
-                        data: { 
-                            marcadores: JSON.stringify(GestorMarcadores.marcadores) 
-                        },
-                        dataType: 'json',
-                        type: 'post',
-                        success: function(output) {
-                            alert("Respuesta del servidor: "+ output.exito);
-                        }
-                    });
+                    dispatchGuardarMarcadores();
                 });
                 
+                var marcadores;
+                if(window.localStorage.getItem('marcadores')){
+                    marcadores = JSON.parse(window.localStorage.getItem('marcadores'));
+                    $("#marcadoresAnteriores").html();
+                    for(i = 0; i<marcadores.length; i++) {
+                        var marcador = marcadores[i];
+                        $("#marcadoresAnteriores").append('<div id="'+marcadores[i].id+'">'+marcadores[i].id+'&nbsp;<button class="loadCueSet">Load cue set</button><button class="deleteCueSet">Delete cue set</button></div>');
+                        $(".loadCueSet").unbind('click').click(function() {
+                            dispatchLoadCueSet($(this).parent().get(0).id);
+                        });
+                        $(".deleteCueSet").unbind('click').click(function() {
+                            dispatchDeleteCueSet($(this).parent().get(0).id);
+                        });
+                    }
+                } else {
+                    // There are no saved cue sets
+                    $("#marcadoresAnteriores").append("<span>There are no saved cue sets</span>");
+                }
+                
                 function dispatchAgregarMarcador() {
-                    GestorMarcadores.agregar(wavesurfer.backend.getCurrentTime(), wavesurfer.backend.getPlayedPercents());
-                    var ultimoMarcador = GestorMarcadores.ultimo();
+                    MarkerMgr.agregar(wavesurfer.backend.getCurrentTime(), wavesurfer.backend.getPlayedPercents());
+                    var ultimoMarcador = MarkerMgr.ultimo();
                     var tiempoMarcador = ultimoMarcador.tiempo;
                     var idMarcador = ultimoMarcador.id;
-                    $("#cuadroMarcadores").append('<div id="'+idMarcador+'">Tiempo: '+tiempoMarcador+'&nbsp;&nbsp;<input>&nbsp;&nbsp;<button class="borrar">Borrar</button>&nbsp;<button class="guardar">Guardar descripción</button>&nbsp;&nbsp;<button class="irMarcador">Ir al marcador</button></div>');
+                    $("#marcadoresActuales").append('<div id="'+idMarcador+'">Start time: '+tiempoMarcador+'&nbsp;&nbsp;<input>&nbsp;&nbsp;<button class="borrar">Delete</button>&nbsp;<button class="guardarDescripcion">Save description</button>&nbsp;&nbsp;<button class="irMarcador">Play from cue point</button></div>');
                     $("#"+idMarcador+" input").unbind("keypress");
                     $(".borrar").click(function() {
                         dispatchEliminar($(this).parent().get(0).id);
@@ -100,52 +114,134 @@
                     $(".irMarcador").click(function() {
                         dispatchIrMarcador($(this).parent().get(0).id);
                     });
-                    $(".guardar").click(function() {
+                    $(".guardarDescripcion").click(function() {
                         dispatchGuardarDescripcion($(this).parent().get(0).id);
                     });
                 }
                 
                 function dispatchEliminarUltimo() {
-                    GestorMarcadores.eliminarUltimo();
-                    $("#cuadroMarcadores div:last-child").remove();
+                    MarkerMgr.eliminarUltimo();
+                    $("#marcadoresActuales div:last-child").remove();
                 }
                 
                 function dispatchEliminar(idMarcador) {
-                    GestorMarcadores.eliminar(idMarcador);
+                    MarkerMgr.eliminar(idMarcador);
                     $("#"+idMarcador).remove();
                 }
                 
                 function dispatchIrMarcador(idMarcador) {
-                    var marcador = GestorMarcadores.buscar(idMarcador);
+                    var marcador = MarkerMgr.marcadores.marcadores[idMarcador-1];
+                    console.log(marcador)
                     wavesurfer.playAt(marcador.porcentaje);
                 }
                 
                 function dispatchGuardarDescripcion(idMarcador) {
                     var descripcion = $("#"+idMarcador+" input").val(); // Busca en DOM con el id
-                    GestorMarcadores.guardarDescripcion(idMarcador, descripcion);
+                    MarkerMgr.guardarDescripcion(idMarcador, descripcion);
                 }
                 
+                function dispatchGuardarMarcadores() {
+                    var id = $("#nombreMarcadores").val();
+                    var marcadores; 
+                    if(window.localStorage.getItem('marcadores')){
+                        marcadores = JSON.parse(window.localStorage.getItem('marcadores'));
+                        if(id != MarkerMgr.marcadores.id)
+                            MarkerMgr.marcadores.id = id;
+                        actualizarMarcador(MarkerMgr.marcadores);
+                    } else {
+                        marcadores = new Array();
+                        MarkerMgr.marcadores.id = id;
+                        marcadores.push(MarkerMgr.marcadores);
+                        window.localStorage.setItem("marcadores", JSON.stringify(marcadores));
+                    }
+                    marcadores = JSON.parse(window.localStorage.getItem("marcadores"));
+                    // Borrar div si es el primero que se agrega
+                    // Si sólo se actualizó no append, si se agregó nuevo sí append
+                    var marcador = marcadores[marcadores.length - 1];
+                    if(marcadores.length == 1) {
+                        $("#marcadoresAnteriores").empty();
+                    }
+                    $("#marcadoresAnteriores").append('<div id="'+marcador.id+'">'+marcador.id+'&nbsp;<button class="loadCueSet">Load cue set</button><button class="deleteCueSet">Delete cue set</button></div>');
+                    $(".loadCueSet").unbind('click').click(function() {
+                        dispatchLoadCueSet($(this).parent().get(0).id);
+                    });
+                    $(".deleteCueSet").unbind('click').click(function() {
+                        dispatchDeleteCueSet($(this).parent().get(0).id);
+                    });
+                }
+                
+                function dispatchLoadCueSet(cueSetId) {
+                    var cuePoints = MarkerMgr.search(cueSetId);
+                    MarkerMgr.marcadores.marcadores = cuePoints.marcadores;
+                    cuePoints = cuePoints.marcadores;
+                    $("#marcadoresActuales").empty();
+                    for(i=0; i<cuePoints.length; i++) {
+                        var ultimoMarcador = cuePoints[i];
+                        var tiempoMarcador = ultimoMarcador.tiempo;
+                        var idMarcador = ultimoMarcador.id;
+                        var descripcion = ultimoMarcador.descripcion;
+                        $("#nombreMarcadores").val(cueSetId);
+                        $("#marcadoresActuales").append('<div id="'+idMarcador+'">Start time: '+tiempoMarcador+'&nbsp;&nbsp;<input value="'+descripcion+'">&nbsp;&nbsp;<button class="borrar">Delete</button>&nbsp;<button class="guardarDescripcion">Save description</button>&nbsp;&nbsp;<button class="irMarcador">Play from cue point</button></div>');
+                        $("#"+idMarcador+" input").unbind("keypress");
+                        $(".borrar").click(function() {
+                            dispatchEliminar($(this).parent().get(0).id);
+                        });
+                        $(".irMarcador").click(function() {
+                            dispatchIrMarcador($(this).parent().get(0).id);
+                        });
+                        $(".guardarDescripcion").click(function() {
+                            dispatchGuardarDescripcion($(this).parent().get(0).id);
+                        });
+                    }
+                    // TODO: separar dispatchers, reutilizarlos y agregar objeto para nombre, no último elemento del arreglo
+                    // Apend to marcadoresActuales divs and dispatch elements
+                }
+                
+                function dispatchDeleteCueSet(cueSetId) {
+                    MarkerMgr.eliminarCueSetAnterior(cueSetId);
+                    $("#"+cueSetId).remove();
+                }
+                // Guarda si no existe o sobreescribe si existe
+                function actualizarMarcador(marcador) {
+                    var marcadores = JSON.parse(window.localStorage.getItem('marcadores'));
+                    var actualizado = false;
+                    for(i = 0; i<marcadores.length; i++) {
+                        if(marcadores[i].id == marcador.id) {
+                            // overwrite
+                            marcadores[i] = marcador;
+                            actualizado = true;
+                        }
+                    }
+                    if(!actualizado)
+                        marcadores.push(marcador);
+                    // update local storage
+                    window.localStorage.setItem("marcadores", JSON.stringify(marcadores));
+                }
             });
         </script>
     </head>
     <body>
-        <span>Para cargar un archivo, con drag and drop</span><br>
-        <span>Para Play/Pause con SPACE o el botón</span><br>
-        <span>Para agregar un marcador con M o el botón</span><br>
-        <span>Para eliminar el último marcador con X o el botón</span><br>
+        <span>To load a file drag and drop it</span><br>
+        <span>To Play/Pause "SPACE"</span><br>
+        <span>To add a cue point "+"</span><br>
+        <span>To delete last cue point "-"</span><br>
+        <span>To play first 10 saved cue points "0-9"</span><br>
         <div class="timeline">
             <div class="cursor" id="wave-cursor"></div>
-            <canvas id="wave" width="1024" height="128"></canvas>
+            <canvas id="wave" width="1024" height="250"></canvas>
         </div>
         <button id="btnPlayPause" class="boton" title="Play/Pause (SPACE)">||></button>
-        <button id="btnMarcador" class="boton" title="Agregar marcador (M)">M</button>
-        <button id="btnEliminar" class="boton" title="Eliminar el último marcador (X)">X</button>
-        <h1>Marcadores:</h1>
-        <div id="cuadroMarcadores">
+        <button id="btnMarcador" class="boton" title="Agregar marcador (+)">+</button>
+        <button id="btnEliminar" class="boton" title="Eliminar el último marcador (-)">-</button>
+        <h1>Current cue set</h1>
+        <div id="marcadoresActuales" class="contenedorMarcadores">
         </div>
         <p>
-            <button id="btnEnviarMarcadores" title="Enviar marcadores">Enviar marcadores</button>
+            <input id="nombreMarcadores">&nbsp;&nbsp;<button id="btnEnviarMarcadores" title="Enviar marcadores">Save cue set</button>
         </p>
-        <span>Funciona con Google Chrome :-)</span><br>
+        <h1>Saved cue sets</h1>
+        <div id="marcadoresAnteriores" class="contenedorMarcadores">
+        </div>
+        <p class="footer">Works with Google Chrome :-)</p>
     </body>
 </html>
