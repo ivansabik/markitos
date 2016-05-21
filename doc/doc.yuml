@@ -1,0 +1,10 @@
+[User]-(Load audio track)
+[User]-(Play track)
+[User]-(Pause track)
+[User]-(Add cue marker)
+[User]-(Edit cue marker)
+[User]-(Delete cue marker)
+[User]-(Export cue markers)
+
+[AudioTrack|+path; +cueMarkers]
+[CueMarker|+timestamp; +isActive; +comment]
