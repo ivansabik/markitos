@@ -5,6 +5,8 @@ markitos
 
 Markitos is a simple app to create cue markers from an audio file and save them, runs completely client-side using Javascript HTML5 features. Great props to [wavesurfer.js](http://wavesurfer-js.org/) for providing the backend.
 
+<img width="500" alt="" src="https://raw.githubusercontent.com/ivansabik/markitos/master/doc/screenshot.png">
+
 ## Dependencies
 
 - bootstrap
@@ -24,10 +26,6 @@ php -S localhost:8000
 If everything runs smooth, you can now go to http://localhost:8000
 
 ## Design
-
-### Views
-
-<img width="500" alt="" src="https://raw.githubusercontent.com/ivansabik/markitos/master/doc/mockup.png">
 
 ### Use cases
 

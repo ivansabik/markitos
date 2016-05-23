@@ -1,0 +1,21 @@
+{
+  "name": "markitos",
+  "version": "0.0.1",
+  "description": "Simple app to create and save cue markers",
+  "main": "dist/markitos.min.js",
+  "scripts": {
+    "start": "grunt; php -S localhost 8000",
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/ivansabik/markitos.git"
+  },
+  "license": "Apache 2.0",
+  "bugs": {
+    "url": "https://github.com/ivansabik/markitos/issues"
+  },
+  "devDependencies": {
+  },
+  "homepage": "https://github.com/ivansabik/markitos"
+}
