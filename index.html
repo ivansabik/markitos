@@ -8,6 +8,8 @@
     <link href="http://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet" type="text/css">
     <link href="http://pingendo.github.io/pingendo-bootstrap/themes/default/bootstrap.css" rel="stylesheet" type="text/css">
     <script src="http://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/1.0.52/wavesurfer.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/2.0.0/handlebars.js"></script>
+
     <script src="app.js"></script>
 </head>
 
@@ -19,7 +21,7 @@
                     <a href="#"><i class="fa fa-4x fa-folder-open fa-fw text-muted"></i></a>
                 </div>
                 <div class="col-md-5">
-                    <h3 class="text-left">Load a local audio track or play with demo track</h3>
+                    <h3 class="text-center">Load a local audio track or play with demo track</h3>
                 </div>
                 <div class="col-md-6 text-center"><a class="btn btn-block btn-lg btn-success" id="playPause"><i class="fa fa-fw fa-lg fa-play pull-left" id="playPauseIcon"></i><span id="playPauseText">Play</span></a></div>
             </div>
@@ -36,48 +38,18 @@
                 </div>
                 <div class="col-md-6 text-center">
                     <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-plus pull-left"></i>Add cue marker</a>
-                        <a href="#" class="btn btn-primary"><i class="fa fa-download fa-fw pull-left"></i>Export</a>
+                        <a href="#" class="btn btn-primary" id="addCue"><i class="fa fa-fw fa-plus pull-left"></i>Add cue marker</a>
+                        <!-- <a href="#" class="btn btn-primary"><i class="fa fa-download fa-fw pull-left"></i>Export</a> !-->
                     </div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="section">
+
+    <script id="cueMarkersTemplate" type="text/x-handlebars-template">
         <div class="container">
             <div class="row">
-                <div class="col-md-3">
-                    <form role="form">
-                        <div class="form-group has-feedback">
-                            <input class="form-control input-lg" id="exampleInputEmail1" placeholder="01 m 02 s 302 ms" type="text" disabled="disabled">
-                        </div>
-                    </form>
-                </div>
-                <div class="col-md-3">
-                    <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-plus"></i></a>
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-minus"></i></a>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center">
-                    <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-success"><i class="fa fa-fw pull-left fa-play"></i>Play</a>
-                        <a href="#" class="btn btn-danger"><i class="fa fa-fw pull-left fa-trash"></i>Delete</a>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <form role="form">
-                        <div class="form-group has-feedback">
-                            <input class="form-control input-lg" id="exampleInputEmail1" placeholder="Enter comment..." type="text">
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="section">
-        <div class="container">
-            <div class="row">
+                {{#each cueMarkers}}
                 <div class="col-md-3">
                     <form role="form">
                         <div class="form-group has-feedback">
@@ -98,81 +70,25 @@
                     </div>
                 </div>
                 <div class="col-md-3">
+                    <!--
                     <form role="form">
                         <div class="form-group has-feedback">
                             <input class="form-control input-lg" id="exampleInputEmail1" placeholder="Enter comment..." type="text">
                         </div>
                     </form>
+                    !-->
                 </div>
+                {{else}}
+                <div class="col-md-12">
+                    <h3>No cue markers in here</h3>
+                </div>
+                {{/each}}
             </div>
         </div>
-    </div>
-    <div class="section">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-3">
-                    <form role="form">
-                        <div class="form-group has-feedback">
-                            <input class="form-control input-lg" id="exampleInputEmail1" placeholder="02 m 07 s 246 ms" type="text" disabled="disabled">
-                        </div>
-                    </form>
-                </div>
-                <div class="col-md-3">
-                    <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-plus"></i></a>
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-minus"></i></a>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center">
-                    <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-success"><i class="fa fa-fw pull-left fa-play"></i>Play</a>
-                        <a href="#" class="btn btn-danger"><i class="fa fa-fw pull-left fa-trash"></i>Delete</a>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <form role="form">
-                        <div class="form-group has-feedback">
-                            <input class="form-control input-lg" id="exampleInputEmail1" placeholder="Enter comment..." type="text">
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="section">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-3">
-                    <form role="form">
-                        <div class="form-group has-feedback">
-                            <input class="form-control input-lg" id="exampleInputEmail1" placeholder="05 m 05 s 127 ms" type="text" disabled="disabled">
-                        </div>
-                    </form>
-                </div>
-                <div class="col-md-3">
-                    <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-plus"></i></a>
-                        <a href="#" class="btn btn-primary"><i class="fa fa-fw fa-minus"></i></a>
-                    </div>
-                </div>
-                <div class="col-md-3 text-center">
-                    <div class="btn-group btn-group-justified btn-group-lg">
-                        <a href="#" class="btn btn-success"><i class="fa fa-fw pull-left fa-play"></i>Play</a>
-                        <a href="#" class="btn btn-danger"><i class="fa fa-fw pull-left fa-trash"></i>Delete</a>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <form role="form">
-                        <div class="form-group has-feedback">
-                            <input class="form-control input-lg" id="exampleInputEmail1" placeholder="Enter comment..." type="text">
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    </script>
 
-
+    <div class="section" id="cueMarkers">
+    </div>
 </body>
 
 </html>

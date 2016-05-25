@@ -9,8 +9,8 @@ Markitos is a simple app to create cue markers from an audio file and save them,
 
 ## Dependencies
 
+- jquery
 - bootstrap
-- knockout
 - wavesurfer.js
 
 ## Install
