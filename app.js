@@ -1,21 +1,68 @@
-var wavesurfer = Object.create(WaveSurfer);
+wavesurfer = Object.create(WaveSurfer);
+audioTrack = new AudioTrack('demo.mp3');
+
+function AudioTrack(nameOrUrl) {
+    this.nameOrUrl = nameOrUrl;
+}
 
 function CueMarker() {
-    this.timestamp = new Date();
+    this.startAt = wavesurfer.getCurrentTime();
     this.isActive = true;
+    this.audioTrack = audioTrack.nameOrUrl;
+    this.text = getText(this.startAt);
 
+    function getText(startAt) {
+        var text = '';
+        text += Math.floor(startAt) + ' s ';
+        text += Number(String(startAt % 1).split('.')[1] || 0) + ' ms';
+        return text;
+    }
 }
 
 CueMarker.findAll = function() {
-  return [];
+    cuemarkers = store.getAll();
+    return cuemarkers;
 };
 
-CueMarker.add = function(cueMarker) {
-  return true;
+CueMarker.pop = function() {
+    var allCueMarkers = store.getAll();
+    var cueMarkerStartAt = Object.keys(allCueMarkers)[Object.keys(allCueMarkers).length - 1];
+    var cueMarker = store.get(cueMarkerStartAt);
+    store.remove(cueMarkerStartAt);
+    console.log('Popped cuemarker');
+    console.log(cueMarker);
+};
+
+CueMarker.remove = function(startAt) {
+    var cueMarker = store.get(startAt)
+    store.remove(startAt);
+    console.log('Removed cuemarker');
+    console.log(cueMarker);
+
+};
+
+CueMarker.add = function() {
+    var cueMarker = new CueMarker();
+    if (store.get(cueMarker.startAt)) {
+        console.log('Warning: Cue marker already exists at that position');
+    } else {
+        store.set(cueMarker.startAt, cueMarker);
+        console.log('Stored cuemarker');
+        console.log(cueMarker);
+    }
+    return cueMarker;
+};
+
+CueMarker.getByPosition = function(position) {
+    var allCueMarkers = store.getAll();
+    var cueMarkerStartAt = Object.keys(allCueMarkers)[position - 1];
+    var cueMarker = store.get(cueMarkerStartAt);
+    console.log('Cuemarker at position ' + position);
+    console.log(cueMarker);
+    return cueMarker;
 };
 
 $(function() {
-    // Load wavesurfjs
     var options = {
         container: '#waveform',
         waveColor: 'violet',
@@ -24,33 +71,63 @@ $(function() {
         cursorColor: 'navy'
     };
     wavesurfer.init(options);
-    wavesurfer.load('demo.mp3');
+    wavesurfer.load(audioTrack.nameOrUrl);
 
     renderCueMarkers();
-
-    // Bind events
-    $('#playPause').click(function() {
-        playPause();
-    });
-    $('#addCue').click(function() {
-        addCue();
-    });
 });
 
 function renderCueMarkers() {
-  cuemarkers = CueMarker.findAll();
-  var templateScript = $('#cueMarkersTemplate').html();
-  var template = Handlebars.compile(templateScript);
-  var context = {
-      'cueMarkers': cuemarkers
-  };
-  var html = template(context);
-  $('#cueMarkers').html(html);
+    cuemarkers = CueMarker.findAll();
+    var templateScript = $('#cueMarkersTemplate').html();
+    var template = Handlebars.compile(templateScript);
+    var context = {
+        'cueMarkers': cuemarkers
+    };
+    var html = template(context);
+    $('#cueMarkers').html(html);
 }
 
-function loadWavesurfer() {
+$(document).on('click', '#playPause', function() {
+    playPause();
+});
 
-}
+$(document).on('click', '#addCue', function() {
+    addCue();
+});
+
+$(document).on('click', '.removeCue', function() {
+    var startAt = $(this).data('cuemarker');
+    removeCue(startAt);
+});
+
+$(document).on('click', '.playCue', function() {
+    var startAt = $(this).data('cuemarker');
+    playCue(startAt);
+});
+
+$(document).keydown(function(e) {
+    // Spacebar
+    if (e.keyCode == 32) {
+        playPause();
+    }
+    // +
+    if (e.keyCode == 107 || e.keyCode == 187) {
+        addCue();
+    }
+    // -
+    if (e.keyCode == 109 || e.keyCode == 189) {
+        popCue();
+    }
+    // 1-9
+    if (e.keyCode >= 49 && e.keyCode <= 57) {
+        position = e.keyCode - 48;
+        playCueByPosition(position);
+    }
+    if (e.keyCode >= 96 && e.keyCode <= 105) {
+        position = e.keyCode - 95;
+        playCueByPosition(position);
+    }
+});
 
 function playPause() {
     wavesurfer.playPause();
@@ -61,7 +138,7 @@ function playPause() {
     $('#playPauseIcon').toggleClass('fa-play');
     $('#playPauseIcon').toggleClass('fa-pause');
 
-    if ($this.hasClass('btn-success')) {
+    if ($('#playPause').hasClass('btn-success')) {
         $('#playPauseText').text('Play');
     } else {
         $('#playPauseText').text('Pause');
@@ -69,15 +146,26 @@ function playPause() {
 }
 
 function addCue() {
-  cueMarker = CueMarker();
-  CueMarker.add(cueMarker);
-  renderCueMarkers();
+    CueMarker.add();
+    renderCueMarkers();
 }
 
-function removeCue() {
-
+function removeCue(cueMarker) {
+    CueMarker.remove(cueMarker);
+    renderCueMarkers();
 }
 
-function playCue() {
+function popCue() {
+    CueMarker.pop();
+    renderCueMarkers();
+}
 
+function playCue(cueMarker) {
+    wavesurfer.play(cueMarker);
+}
+
+function playCueByPosition(position) {
+    var cueMarker = CueMarker.getByPosition(position);
+    if(cueMarker)
+      wavesurfer.play(cueMarker.startAt);
 }
