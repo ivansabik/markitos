@@ -20,6 +20,7 @@ A quick and dirty setup using php built-in server is the following, you can use 
 ```
 git clone https://github.com/ivansabik/markitos.git
 cd markitos
+bower install
 php -S localhost:8000
 ```
 
