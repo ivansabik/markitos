@@ -2,11 +2,13 @@
 <widget id="com.mandroslabs.markitos" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <name>Markitos</name>
     <description>
-      Simple app to create and save cue markers.
+        Simple app to create and save cue markers.
     </description>
     <author email="sabik@mandroslabs.com" href="http://mandroslabs.com">
         Mandros Labs
     </author>
-    <icon src="icon.png" />
-    <platform name="android" />
+    <icon src="icon.png"/>
+    <platform name="android"/>
+    <gap:plugin name="org.apache.cordova.file"/>
+    <gap:plugin name="org.apache.cordova.file-transfer"/>
 </widget>
