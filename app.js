@@ -7,7 +7,6 @@ function AudioTrack(nameOrUrl) {
 
 function CueMarker() {
     this.startAt = wavesurfer.getCurrentTime();
-    this.isActive = true;
     this.audioTrack = audioTrack.nameOrUrl;
     this.text = getText(this.startAt);
 
@@ -21,6 +20,12 @@ function CueMarker() {
 
 CueMarker.findAll = function() {
     cuemarkers = store.getAll();
+    console.log('Loading markers for song ' + audioTrack.nameOrUrl)
+    for (var key in cuemarkers) {
+        if (cuemarkers[key].audioTrack != audioTrack.nameOrUrl) {
+            delete cuemarkers[key];
+        }
+    };
     return cuemarkers;
 };
 
@@ -105,6 +110,10 @@ $(document).on('click', '.playCue', function() {
     playCue(startAt);
 });
 
+$(document).on('click', '#loadTrack', function() {
+    loadTrack();
+});
+
 $(document).keydown(function(e) {
     // Spacebar
     if (e.keyCode == 32) {
@@ -126,6 +135,10 @@ $(document).keydown(function(e) {
     if (e.keyCode >= 96 && e.keyCode <= 105) {
         position = e.keyCode - 95;
         playCueByPosition(position);
+    }
+    // O
+    if (e.keyCode == 79) {
+        loadTrack();
     }
 });
 
@@ -166,6 +179,22 @@ function playCue(cueMarker) {
 
 function playCueByPosition(position) {
     var cueMarker = CueMarker.getByPosition(position);
-    if(cueMarker)
-      wavesurfer.play(cueMarker.startAt);
+    if (cueMarker)
+        wavesurfer.play(cueMarker.startAt);
+}
+
+function loadTrack() {
+    var fd = $.FileDialog({
+        multiple: false,
+        accept: 'audio/mpeg3',
+        readAs: 'ArrayBuffer'
+    });
+
+    fd.on('files.bs.filedialog', function(ev) {
+        var file = ev.files.pop();
+        wavesurfer.loadBlob(file);
+        audioTrack = new AudioTrack(file.name);
+        $('#trackName').html(audioTrack.nameOrUrl);
+        renderCueMarkers();
+    });
 }
