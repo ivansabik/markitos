@@ -186,7 +186,6 @@ function playCueByPosition(position) {
 function loadTrack() {
     var fd = $.FileDialog({
         multiple: false,
-        accept: 'audio/mpeg3',
         readAs: 'ArrayBuffer'
     });
 
